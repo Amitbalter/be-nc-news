@@ -36,7 +36,30 @@ exports.selectArticles = () => {
             ORDER BY articles.created_at DESC;`
         )
         .then((result) => {
-            console.log(result.rows);
             return result.rows;
+        });
+};
+
+exports.selectCommentsByArticle = (article_id) => {
+    return db
+        .query(
+            `SELECT comments.comment_id, comments.votes, comments.created_at,
+            comments.author, comments.body, comments.article_id
+            FROM articles
+            LEFT JOIN comments ON articles.article_id = comments.article_id
+            WHERE articles.article_id = $1 
+            AND comments.comment_id IS NOT NULL
+            ORDER BY comments.created_at DESC;`,
+            [article_id]
+        )
+        .then((result) => {
+            const comments = result.rows;
+            if (!comments) {
+                return Promise.reject({
+                    status: 404,
+                    msg: `article does not exist`,
+                });
+            }
+            return comments;
         });
 };
