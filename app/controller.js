@@ -1,4 +1,4 @@
-const { fetchEndpoints, selectTopics, selectArticleById, selectArticles, selectCommentsByArticle } = require("./model");
+const { fetchEndpoints, selectTopics, selectArticleById, selectArticles, selectCommentsByArticle, insertCommentToArticle } = require("./model");
 
 exports.getEndpoints = (req, res) => {
     const endpoints = fetchEndpoints();
@@ -35,6 +35,22 @@ exports.getCommentsByArticle = (req, res, next) => {
             selectCommentsByArticle(article_id).then((comments) => {
                 res.status(200).send(comments);
             });
+        })
+        .catch(next);
+};
+
+exports.postCommentToArticle = (req, res, next) => {
+    const { article_id } = req.params;
+    const newComment = req.body;
+    selectArticleById(article_id)
+        .then(() => {
+            insertCommentToArticle(newComment, article_id)
+                .then((comment) => {
+                    res.status(201).send(comment);
+                })
+                .catch((err) => {
+                    next(err);
+                });
         })
         .catch(next);
 };
