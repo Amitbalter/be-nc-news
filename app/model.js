@@ -1,4 +1,5 @@
 const db = require("../db/connection");
+const format = require("pg-format");
 
 exports.fetchEndpoints = () => {
     const endpointsJson = require("../endpoints.json");
@@ -62,4 +63,22 @@ exports.selectCommentsByArticle = (article_id) => {
             }
             return comments;
         });
+};
+
+exports.insertCommentToArticle = ({ username, body }, article_id) => {
+    if (!username || !body) {
+        return Promise.reject({
+            status: 400,
+            msg: `Bad request`,
+        });
+    }
+    const queryStr = format(
+        `INSERT INTO comments 
+        (body, votes, author, article_id) 
+        VALUES %L RETURNING *;`,
+        [[body, 0, username, article_id]]
+    );
+    return db.query(queryStr).then((result) => {
+        return result.rows[0];
+    });
 };
