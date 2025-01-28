@@ -76,7 +76,7 @@ describe("/api/articles", () => {
             .get("/api/articles")
             .expect(200)
             .then(({ body: articles }) => {
-                expect(articles.length).toBe(articleData.length);
+                expect(articles.length).toBe(13);
                 articles.forEach((article) => {
                     expect(typeof article.author).toBe("string");
                     expect(typeof article.title).toBe("string");
@@ -88,6 +88,57 @@ describe("/api/articles", () => {
                     expect(typeof article.comment_count).toBe("number");
                 });
                 expect(articles).toBeSortedBy("created_at", { descending: true });
+            });
+    });
+});
+
+describe("/api/articles/:article_id/comments", () => {
+    test("GET:200 gets all comments for an article sorted by date descending", () => {
+        return request(app)
+            .get("/api/articles/1/comments")
+            .expect(200)
+            .then(({ body: comments }) => {
+                comments.forEach((comment) => {
+                    expect(typeof comment.comment_id).toBe("number");
+                    expect(typeof comment.votes).toBe("number");
+                    expect(typeof comment.created_at).toBe("string");
+                    expect(typeof comment.author).toBe("string");
+                    expect(typeof comment.body).toBe("string");
+                    expect(typeof comment.article_id).toBe("number");
+                });
+                expect(comments).toBeSortedBy("created_at", { descending: true });
+            });
+    });
+    test("GET:200 returns empty array for article with no comments.", () => {
+        return request(app)
+            .get("/api/articles/2/comments")
+            .expect(200)
+            .then(({ body: comments }) => {
+                expect(comments.length).toBe(0);
+                comments.forEach((comment) => {
+                    expect(typeof comment.comment_id).toBe("number");
+                    expect(typeof comment.votes).toBe("number");
+                    expect(typeof comment.created_at).toBe("string");
+                    expect(typeof comment.author).toBe("string");
+                    expect(typeof comment.body).toBe("string");
+                    expect(typeof comment.article_id).toBe("number");
+                });
+            });
+    });
+    test("GET:404 sends an appropriate status and error message when given a valid but non-existent id", () => {
+        return request(app)
+            .get("/api/articles/999/comments")
+            .expect(404)
+            .then((response) => {
+                expect(response.body.msg).toBe("article does not exist");
+            });
+    });
+    test("GET:400 sends an appropriate status and error message when given an invalid id", () => {
+        return request(app)
+            .get("/api/articles/not-an-article/comments")
+            .expect(400)
+            .then((response) => {
+                expect(response.body.msg).toBe("Bad request");
             });
     });
 });
