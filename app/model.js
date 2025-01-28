@@ -82,3 +82,25 @@ exports.insertCommentToArticle = ({ username, body }, article_id) => {
         return result.rows[0];
     });
 };
+
+exports.updateArticleById = (inc_votes, article_id) => {
+    if (typeof inc_votes !== "number") {
+        return Promise.reject({
+            status: 400,
+            msg: `Bad request`,
+        });
+    }
+    console.log(inc_votes, article_id);
+    return db
+        .query(
+            `UPDATE articles
+            SET votes = votes + $1 
+            WHERE article_id = $2 
+            RETURNING *;`,
+            [inc_votes, article_id]
+        )
+        .then((result) => {
+            console.log(result.rows[0]);
+            return result.rows[0];
+        });
+};

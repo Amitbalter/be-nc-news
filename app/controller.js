@@ -1,4 +1,12 @@
-const { fetchEndpoints, selectTopics, selectArticleById, selectArticles, selectCommentsByArticle, insertCommentToArticle } = require("./model");
+const {
+    fetchEndpoints,
+    selectTopics,
+    selectArticleById,
+    selectArticles,
+    selectCommentsByArticle,
+    insertCommentToArticle,
+    updateArticleById,
+} = require("./model");
 
 exports.getEndpoints = (req, res) => {
     const endpoints = fetchEndpoints();
@@ -47,6 +55,22 @@ exports.postCommentToArticle = (req, res, next) => {
             insertCommentToArticle(newComment, article_id)
                 .then((comment) => {
                     res.status(201).send(comment);
+                })
+                .catch((err) => {
+                    next(err);
+                });
+        })
+        .catch(next);
+};
+
+exports.patchArticleById = (req, res, next) => {
+    const { article_id } = req.params;
+    const { inc_votes } = req.body;
+    selectArticleById(article_id)
+        .then(() => {
+            updateArticleById(inc_votes, article_id)
+                .then((article) => {
+                    res.status(201).send(article);
                 })
                 .catch((err) => {
                     next(err);

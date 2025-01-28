@@ -68,6 +68,34 @@ describe("/api/articles/:article_id", () => {
                 expect(response.body.msg).toBe("Bad request");
             });
     });
+    test("PATCH:201 updates article with new vote count and returns article to client", () => {
+        const newVotes = { inc_votes: 1 };
+        return request(app)
+            .patch("/api/articles/1")
+            .send(newVotes)
+            .expect(201)
+            .then(({ body: article }) => {
+                expect(article.title).toBe("Living in the shadow of a great man");
+                expect(article.topic).toBe("mitch");
+                expect(article.author).toBe("butter_bridge");
+                expect(article.body).toBe("I find this existence challenging");
+                expect(typeof article.created_at).toBe("string");
+                expect(article.votes).toBe(101);
+                expect(article.article_img_url).toBe(
+                    "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
+                );
+            });
+    });
+    test("PATCH:400 responds with an appropriate status and error message when provided with invalid vote_inc", () => {
+        const newVotes = { inc_votes: "invalid vote_inc" };
+        return request(app)
+            .patch("/api/articles/1")
+            .send(newVotes)
+            .expect(400)
+            .then((response) => {
+                expect(response.body.msg).toBe("Bad request");
+            });
+    });
 });
 
 describe("/api/articles", () => {

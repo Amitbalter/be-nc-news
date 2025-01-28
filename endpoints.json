@@ -67,5 +67,19 @@
                 }
             ]
         }
+    },
+    "PATCH /api/articles/:article_id": {
+        "description": "update an article by article_id",
+        "exampleResponse": {
+            "article": {
+                "title": "new article",
+                "topic": "new topic",
+                "author": "butter_bridge",
+                "body": "new body",
+                "created_at": 1594329060000,
+                "votes": 100,
+                "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
+            }
+        }
     }
 }
