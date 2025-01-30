@@ -118,6 +118,41 @@ describe("/api/articles", () => {
                 expect(articles).toBeSortedBy("created_at", { descending: true });
             });
     });
+    test("GET:200 sends an array of articles to the client sorted by comment_count in ascending order", () => {
+        return request(app)
+            .get("/api/articles?sort_by=comment_count&order=ASC")
+            .expect(200)
+            .then(({ body: articles }) => {
+                expect(articles.length).toBe(13);
+                articles.forEach((article) => {
+                    expect(typeof article.author).toBe("string");
+                    expect(typeof article.title).toBe("string");
+                    expect(typeof article.article_id).toBe("number");
+                    expect(typeof article.topic).toBe("string");
+                    expect(typeof article.created_at).toBe("string");
+                    expect(typeof article.votes).toBe("number");
+                    expect(typeof article.article_img_url).toBe("string");
+                    expect(typeof article.comment_count).toBe("number");
+                });
+                expect(articles).toBeSortedBy("comment_count", { ascending: true });
+            });
+    });
+    test("GET:400 sends an appropriate status and error message when given an invalid sort_by query", () => {
+        return request(app)
+            .get("/api/articles/sort_by=not_sort")
+            .expect(400)
+            .then((response) => {
+                expect(response.body.msg).toBe("Bad request");
+            });
+    });
+    test("GET:400 sends an appropriate status and error message when given an invalid order query", () => {
+        return request(app)
+            .get("/api/articles/sort_by=not_order")
+            .expect(400)
+            .then((response) => {
+                expect(response.body.msg).toBe("Bad request");
+            });
+    });
 });
 
 describe("/api/articles/:article_id/comments", () => {
@@ -261,7 +296,7 @@ describe("/api/comments/:comment_id", () => {
     });
 });
 
-describe.only("/api/users", () => {
+describe("/api/users", () => {
     test("GET:200 sends an array of users to the client", () => {
         return request(app)
             .get("/api/users")
