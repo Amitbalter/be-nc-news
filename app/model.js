@@ -14,16 +14,27 @@ exports.selectTopics = () => {
 };
 
 exports.selectArticleById = (article_id) => {
-    return db.query("SELECT * FROM articles WHERE article_id = $1;", [article_id]).then((result) => {
-        const article = result.rows[0];
-        if (!article) {
-            return Promise.reject({
-                status: 404,
-                msg: `article does not exist`,
-            });
-        }
-        return article;
-    });
+    return db
+        .query(
+            `SELECT articles.author, articles.title, articles.article_id, 
+            articles.topic, articles.created_at, articles.votes, articles.body,
+            article_img_url, COUNT(comments.article_id)::INT AS comment_count
+            FROM articles
+            LEFT JOIN comments ON articles.article_id = comments.article_id
+            WHERE articles.article_id = $1
+            GROUP BY articles.article_id;`,
+            [article_id]
+        )
+        .then((result) => {
+            const article = result.rows[0];
+            if (!article) {
+                return Promise.reject({
+                    status: 404,
+                    msg: `article does not exist`,
+                });
+            }
+            return article;
+        });
 };
 
 exports.selectArticles = (sort_by = "created_at", order = "DESC", topic) => {
