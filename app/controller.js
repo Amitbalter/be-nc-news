@@ -8,6 +8,7 @@ const {
     updateArticleById,
     removeCommentById,
     selectCommentById,
+    selectUsers,
 } = require("./model");
 
 exports.getEndpoints = (req, res) => {
@@ -90,4 +91,10 @@ exports.deleteCommentById = (req, res, next) => {
                 .catch(next);
         })
         .catch(next);
+};
+
+exports.getUsers = (req, res, next) => {
+    selectUsers().then((result) => {
+        res.status(200).send(result);
+    });
 };
