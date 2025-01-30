@@ -137,6 +137,23 @@ describe("/api/articles", () => {
                 expect(articles).toBeSortedBy("comment_count", { ascending: true });
             });
     });
+    test("GET:200 sends an array of articles to the client filtered by topic", () => {
+        return request(app)
+            .get("/api/articles?topic=mitch")
+            .expect(200)
+            .then(({ body: articles }) => {
+                articles.forEach((article) => {
+                    expect(typeof article.author).toBe("string");
+                    expect(typeof article.title).toBe("string");
+                    expect(typeof article.article_id).toBe("number");
+                    expect(article.topic).toBe("mitch");
+                    expect(typeof article.created_at).toBe("string");
+                    expect(typeof article.votes).toBe("number");
+                    expect(typeof article.article_img_url).toBe("string");
+                    expect(typeof article.comment_count).toBe("number");
+                });
+            });
+    });
     test("GET:400 sends an appropriate status and error message when given an invalid sort_by query", () => {
         return request(app)
             .get("/api/articles/sort_by=not_sort")
@@ -148,6 +165,14 @@ describe("/api/articles", () => {
     test("GET:400 sends an appropriate status and error message when given an invalid order query", () => {
         return request(app)
             .get("/api/articles/sort_by=not_order")
+            .expect(400)
+            .then((response) => {
+                expect(response.body.msg).toBe("Bad request");
+            });
+    });
+    test("GET:400 sends an appropriate status and error message when given an invalid topic query", () => {
+        return request(app)
+            .get("/api/articles/topic=not_topic")
             .expect(400)
             .then((response) => {
                 expect(response.body.msg).toBe("Bad request");
