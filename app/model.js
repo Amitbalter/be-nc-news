@@ -90,7 +90,6 @@ exports.updateArticleById = (inc_votes, article_id) => {
             msg: `Bad request`,
         });
     }
-    console.log(inc_votes, article_id);
     return db
         .query(
             `UPDATE articles
@@ -100,7 +99,23 @@ exports.updateArticleById = (inc_votes, article_id) => {
             [inc_votes, article_id]
         )
         .then((result) => {
-            console.log(result.rows[0]);
             return result.rows[0];
         });
+};
+
+exports.selectCommentById = (comment_id) => {
+    return db.query(`SELECT * FROM comments WHERE comment_id=$1;`, [comment_id]).then((result) => {
+        const comment = result.rows[0];
+        if (!comment) {
+            return Promise.reject({
+                status: 404,
+                msg: `comment does not exist`,
+            });
+        }
+        return comment;
+    });
+};
+
+exports.removeCommentById = (comment_id) => {
+    return db.query(`DELETE FROM comments WHERE comment_id = $1;`, [comment_id]);
 };

@@ -6,6 +6,8 @@ const {
     selectCommentsByArticle,
     insertCommentToArticle,
     updateArticleById,
+    removeCommentById,
+    selectCommentById,
 } = require("./model");
 
 exports.getEndpoints = (req, res) => {
@@ -75,6 +77,17 @@ exports.patchArticleById = (req, res, next) => {
                 .catch((err) => {
                     next(err);
                 });
+        })
+        .catch(next);
+};
+
+exports.deleteCommentById = (req, res, next) => {
+    const { comment_id } = req.params;
+    selectCommentById(comment_id)
+        .then(() => {
+            removeCommentById(comment_id)
+                .then(() => res.status(204).send())
+                .catch(next);
         })
         .catch(next);
 };
