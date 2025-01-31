@@ -9,7 +9,7 @@ const { articleData, commentData, topicData, userData } = data;
 beforeEach(() => seed(data));
 afterAll(() => db.end());
 
-describe("/api", () => {
+describe("GET /api", () => {
     test("Get: 200 Responds with an object detailing the documentation for each endpoint", () => {
         return request(app)
             .get("/api")
@@ -20,7 +20,7 @@ describe("/api", () => {
     });
 });
 
-describe("/api/topics", () => {
+describe("GET /api/topics", () => {
     test("GET:200 sends an array of topics to the client", () => {
         return request(app)
             .get("/api/topics")
@@ -35,7 +35,7 @@ describe("/api/topics", () => {
     });
 });
 
-describe("/api/articles/:article_id", () => {
+describe("GET /api/articles/:article_id", () => {
     test("GET:200 gets an article by its id.", () => {
         return request(app)
             .get("/api/articles/1")
@@ -50,7 +50,6 @@ describe("/api/articles/:article_id", () => {
                 expect(article.article_img_url).toBe(
                     "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
                 );
-                expect(article.comment_count).toBe(11);
             });
     });
     test("GET:404 sends an appropriate status and error message when given a valid but non-existent id", () => {
@@ -69,6 +68,17 @@ describe("/api/articles/:article_id", () => {
                 expect(response.body.msg).toBe("Bad request");
             });
     });
+    test("GET:200 gets in addition retrieves comment_count for article", () => {
+        return request(app)
+            .get("/api/articles/1")
+            .expect(200)
+            .then(({ body: article }) => {
+                expect(article.comment_count).toBe(11);
+            });
+    });
+});
+
+describe("PATCH /api/articles/:article_id", () => {
     test("PATCH:201 updates article with new vote count and returns article to client", () => {
         const newVotes = { inc_votes: 1 };
         return request(app)
@@ -99,8 +109,8 @@ describe("/api/articles/:article_id", () => {
     });
 });
 
-describe("/api/articles", () => {
-    test("GET:200 sends an array of articles to the client sorted by date in descending order", () => {
+describe("GET /api/articles", () => {
+    test("GET:200 sends an array of articles to the client by default sorted by date in descending order", () => {
         return request(app)
             .get("/api/articles")
             .expect(200)
@@ -138,11 +148,50 @@ describe("/api/articles", () => {
                 expect(articles).toBeSortedBy("comment_count", { ascending: true });
             });
     });
+    test("GET:200 sends an array of articles to the client sorted by votes in descending order", () => {
+        return request(app)
+            .get("/api/articles?sort_by=votes")
+            .expect(200)
+            .then(({ body: articles }) => {
+                expect(articles.length).toBe(13);
+                articles.forEach((article) => {
+                    expect(typeof article.author).toBe("string");
+                    expect(typeof article.title).toBe("string");
+                    expect(typeof article.article_id).toBe("number");
+                    expect(typeof article.topic).toBe("string");
+                    expect(typeof article.created_at).toBe("string");
+                    expect(typeof article.votes).toBe("number");
+                    expect(typeof article.article_img_url).toBe("string");
+                    expect(typeof article.comment_count).toBe("number");
+                });
+                expect(articles).toBeSortedBy("votes", { descending: true });
+            });
+    });
+    test("GET:200 sends an array of articles to the client sorted by date created in ascending order", () => {
+        return request(app)
+            .get("/api/articles?order=ASC")
+            .expect(200)
+            .then(({ body: articles }) => {
+                expect(articles.length).toBe(13);
+                articles.forEach((article) => {
+                    expect(typeof article.author).toBe("string");
+                    expect(typeof article.title).toBe("string");
+                    expect(typeof article.article_id).toBe("number");
+                    expect(typeof article.topic).toBe("string");
+                    expect(typeof article.created_at).toBe("string");
+                    expect(typeof article.votes).toBe("number");
+                    expect(typeof article.article_img_url).toBe("string");
+                    expect(typeof article.comment_count).toBe("number");
+                });
+                expect(articles).toBeSortedBy("created_at", { ascending: true });
+            });
+    });
     test("GET:200 sends an array of articles to the client filtered by topic", () => {
         return request(app)
             .get("/api/articles?topic=mitch")
             .expect(200)
             .then(({ body: articles }) => {
+                expect(articles.length).toBe(12);
                 articles.forEach((article) => {
                     expect(typeof article.author).toBe("string");
                     expect(typeof article.title).toBe("string");
@@ -155,6 +204,14 @@ describe("/api/articles", () => {
                 });
             });
     });
+    test("GET:200 sends an empty array when topic has no associated articles", () => {
+        return request(app)
+            .get("/api/articles?topic=paper")
+            .expect(200)
+            .then(({ body: articles }) => {
+                expect(articles).toEqual([]);
+            });
+    });
     test("GET:400 sends an appropriate status and error message when given an invalid sort_by query", () => {
         return request(app)
             .get("/api/articles/sort_by=not_sort")
@@ -165,7 +222,7 @@ describe("/api/articles", () => {
     });
     test("GET:400 sends an appropriate status and error message when given an invalid order query", () => {
         return request(app)
-            .get("/api/articles/sort_by=not_order")
+            .get("/api/articles/order=not_order")
             .expect(400)
             .then((response) => {
                 expect(response.body.msg).toBe("Bad request");
@@ -181,7 +238,7 @@ describe("/api/articles", () => {
     });
 });
 
-describe("/api/articles/:article_id/comments", () => {
+describe("GET /api/articles/:article_id/comments", () => {
     test("GET:200 gets all comments for an article sorted by date descending", () => {
         return request(app)
             .get("/api/articles/1/comments")
@@ -230,6 +287,9 @@ describe("/api/articles/:article_id/comments", () => {
                 expect(response.body.msg).toBe("Bad request");
             });
     });
+});
+
+describe("POST /api/articles/:article_id/comments", () => {
     test("POST:201 adds a new comment to the correct article and sends the comment back to the client", () => {
         const newComment = {
             username: "butter_bridge",
@@ -300,7 +360,7 @@ describe("/api/articles/:article_id/comments", () => {
     });
 });
 
-describe("/api/comments/:comment_id", () => {
+describe("DELETE /api/comments/:comment_id", () => {
     test("DELETE:204 deletes the specified comment and responds with no content", () => {
         return request(app).delete("/api/comments/1").expect(204);
     });
@@ -322,7 +382,7 @@ describe("/api/comments/:comment_id", () => {
     });
 });
 
-describe("/api/users", () => {
+describe("GET /api/users", () => {
     test("GET:200 sends an array of users to the client", () => {
         return request(app)
             .get("/api/users")
