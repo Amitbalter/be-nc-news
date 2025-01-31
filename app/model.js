@@ -1,6 +1,5 @@
 const db = require("../db/connection");
 const format = require("pg-format");
-const { sort } = require("../db/data/test-data/users");
 
 exports.fetchEndpoints = () => {
     const endpointsJson = require("../endpoints.json");
@@ -38,32 +37,34 @@ exports.selectArticleById = (article_id) => {
 };
 
 exports.selectArticles = (sort_by = "created_at", order = "DESC", topic) => {
-    const allowedSort_by = ["author", "title", "article_id", "topic", "created_at", "votes", "article_img_url", "comment_count"];
-    const allowedOrder = ["ASC", "DESC"];
-    const allowedTopics = ["mitch"];
+    return db.query("SELECT * FROM topics;").then((result) => {
+        const allowedTopics = result.rows.map((row) => row.slug);
+        const allowedSort_by = ["author", "title", "article_id", "topic", "created_at", "votes", "article_img_url", "comment_count"];
+        const allowedOrder = ["ASC", "DESC"];
 
-    let queryStr = `SELECT articles.author, articles.title, articles.article_id, 
-            articles.topic, articles.created_at, articles.votes, 
-            article_img_url, COUNT(comments.article_id)::INT AS comment_count
-            FROM articles
-            LEFT JOIN comments ON articles.article_id = comments.article_id \n`;
+        let queryStr = `SELECT articles.author, articles.title, articles.article_id,
+                articles.topic, articles.created_at, articles.votes,
+                article_img_url, COUNT(comments.article_id)::INT AS comment_count
+                FROM articles
+                LEFT JOIN comments ON articles.article_id = comments.article_id \n`;
 
-    if (!allowedTopics.includes(topic) && topic !== undefined) {
-        return Promise.reject({ status: 400, msg: "Bad request" });
-    } else if (topic) {
-        queryStr += `WHERE articles.topic = '${topic}' \n`;
-    }
+        if (!allowedTopics.includes(topic) && topic !== undefined) {
+            return Promise.reject({ status: 400, msg: "Bad request" });
+        } else if (topic) {
+            queryStr += `WHERE articles.topic = '${topic}' \n`;
+        }
 
-    queryStr += `GROUP BY articles.article_id \n`;
+        queryStr += `GROUP BY articles.article_id \n`;
 
-    if (!allowedSort_by.includes(sort_by) || !allowedOrder.includes(order)) {
-        return Promise.reject({ status: 400, msg: "Bad request" });
-    } else {
-        queryStr += `ORDER BY ${sort_by} ${order};`;
-    }
+        if (!allowedSort_by.includes(sort_by) || !allowedOrder.includes(order)) {
+            return Promise.reject({ status: 400, msg: "Bad request" });
+        } else {
+            queryStr += `ORDER BY ${sort_by} ${order};`;
+        }
 
-    return db.query(queryStr).then((result) => {
-        return result.rows;
+        return db.query(queryStr).then((result) => {
+            return result.rows;
+        });
     });
 };
 
@@ -92,12 +93,6 @@ exports.selectCommentsByArticle = (article_id) => {
 };
 
 exports.insertCommentToArticle = ({ username, body }, article_id) => {
-    if (!username || !body) {
-        return Promise.reject({
-            status: 400,
-            msg: `Bad request`,
-        });
-    }
     const queryStr = format(
         `INSERT INTO comments 
         (body, votes, author, article_id) 
@@ -110,12 +105,6 @@ exports.insertCommentToArticle = ({ username, body }, article_id) => {
 };
 
 exports.updateArticleById = (inc_votes, article_id) => {
-    if (typeof inc_votes !== "number") {
-        return Promise.reject({
-            status: 400,
-            msg: `Bad request`,
-        });
-    }
     return db
         .query(
             `UPDATE articles
